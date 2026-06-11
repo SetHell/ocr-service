@@ -5,7 +5,16 @@ import cv2
 from app.normalizer import normalizar_respuesta
 from app.checkbox_detector import detc_cas
 
-reader = easyocr.Reader(["es"], gpu=False)
+
+# 🚨 NO cargar el modelo en startup
+_reader = None
+
+
+def get_reader():
+    global _reader
+    if _reader is None:
+        _reader = easyocr.Reader(["es"], gpu=False)
+    return _reader
 
 
 def limpiar_bbox(bbox):
@@ -39,6 +48,8 @@ def leer_zona(img, coords, allowlist=None):
     zona = recortar(img, *coords)
     zona = mejorar_zona(zona)
 
+    reader = get_reader()
+
     args = {
         "detail": 1,
         "paragraph": False,
@@ -66,37 +77,22 @@ def leer_zona(img, coords, allowlist=None):
 
 def leer_zonas(img):
     return {
-        "placa": leer_zona(
-            img,
-            (0.22, 0.25, 0.50, 0.34),
-            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        ),
-        "art": leer_zona(
-            img,
-            (0.42, 0.50, 0.56, 0.57),
-            "0123456789",
-        ),
-        "num": leer_zona(
-            img,
-            (0.70, 0.50, 0.87, 0.57),
-            "0123456789",
-        ),
-        "lugar": leer_zona(
-            img,
-            (0.32, 0.53, 0.66, 0.61),
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ._-",
-        ),
-        "zona": leer_zona(
-            img,
-            (0.62, 0.53, 0.92, 0.61),
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ._-",
-        ),
+        "placa": leer_zona(img, (0.22, 0.25, 0.50, 0.34),
+                           "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+        "art": leer_zona(img, (0.42, 0.50, 0.56, 0.57),
+                         "0123456789"),
+        "num": leer_zona(img, (0.70, 0.50, 0.87, 0.57),
+                         "0123456789"),
+        "lugar": leer_zona(img, (0.32, 0.53, 0.66, 0.61),
+                           "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ._-"),
+        "zona": leer_zona(img, (0.62, 0.53, 0.92, 0.61),
+                          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ._-"),
     }
 
 
 def leer_imagen(contenido: bytes):
     img = bytes_a_imagen(contenido)
-    result = reader.readtext(img)
+    result = get_reader().readtext(img)
 
     textos = []
 

@@ -17,15 +17,23 @@ def inicio():
         "estado": "BETA",
     }
 
+
 @app.post("/ocr/procesar")
 async def procesar_ocr(file: UploadFile = File(...)):
+
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Debe subir una imagen")
 
     contenido = await file.read()
 
     try:
-        return JSONResponse(content=leer_imagen(contenido))
+        # 🔥 IMPORT DIFERIDO (CLAVE PARA RENDER)
+        from app.easy_ocr import leer_imagen
+
+        resultado = leer_imagen(contenido)
+
+        return JSONResponse(content=resultado)
+
     except Exception as e:
         print("ERROR OCR:")
         traceback.print_exc()

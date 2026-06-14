@@ -11,8 +11,11 @@ RUN useradd -m -u 1000 appuser
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir "python-bidi==0.4.2" --force-reinstall
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir "python-bidi==0.4.2" --force-reinstall --no-deps && \
+    sed -i 's/from bidi import get_display/from bidi.algorithm import get_display/' \
+    /usr/local/lib/python3.11/site-packages/easyocr/easyocr.py
 
 COPY --chown=appuser:appuser . .
 
